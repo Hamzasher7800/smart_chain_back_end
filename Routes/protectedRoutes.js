@@ -2,11 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
+const requireAdmin = require('../middleware/roleMiddleware')
 
-// Apply the middleware to a protected route
-router.get('/protected-route', verifyToken, (req, res) => {
-    // Logic for the protected route
-    res.json({ message: 'Access to protected route successful' });
+// Apply both middlewares to protect the route for admin users
+router.get('/admin-protected-route', verifyToken, requireAdmin, (req, res) => {
+    // Logic for the admin-protected route
+    res.json({ message: 'Access to admin-protected route successful' });
 });
 
 module.exports = router;

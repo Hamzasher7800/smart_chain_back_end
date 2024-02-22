@@ -20,6 +20,9 @@ const verifyToken = (req, res, next) => {
         req.user = decoded; // Add decoded payload to request object
         next(); // Proceed to the next middleware or route handler
     } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Your session has expired. Please log in again.' });
+        }
         // Handle any error that occurred during verification
         res.status(400).json({ message: 'Invalid token.' });
     }
