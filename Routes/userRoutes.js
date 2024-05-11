@@ -12,3 +12,12 @@
 // router.route('/signup').post(signup)
 
 // module.exports= router;
+const express = require('express');
+const router = express.Router();
+const {updateProfile} = require('../Controllers/userController');
+// Assume you have middleware to verify if the user is authenticated
+const verifyToken = require('../middleware/authMiddleware');
+// Route to update user profile
+router.put('/updateProfile/:userId', verifyToken,updateProfile);
+
+module.exports = router;

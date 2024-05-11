@@ -334,99 +334,133 @@ require("dotenv").config();
 //   }
 // };
 ///////######## SIGNUP API ##########/////////
+// exports.signup = async (req, res) => {
+//   console.log("Request Body:", req.body);
+//   const { name, email, password } = req.body;
+
+//   // Check for missing fields
+//   if (!name || !email || !password) {
+//     return res.status(400).json({ message: "Missing required fields" });
+//   }
+
+//   // Name validation: only letters and spaces
+//   const nameRegex = /^[A-Za-z\s]+$/;
+//   if (!nameRegex.test(name)) {
+//     return res
+//       .status(400)
+//       .json({ message: "Name must contain only letters and spaces" });
+//   }
+
+//   // Email validation: basic format check
+//   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+//   if (!emailRegex.test(email)) {
+//     return res.status(400).json({ message: "Invalid email format" });
+//   }
+
+//   // Password validation: minimum 6 characters
+//   if (password.length < 6) {
+//     return res
+//       .status(400)
+//       .json({ message: "Password must be at least 6 characters long" });
+//   }
+
+//   try {
+//     const hashedPassword = await bcrypt.hash(password, 12);
+//     const role =
+//       email.toLowerCase() === "hamzasher7800@gmail.com".toLowerCase()
+//         ? "admin"
+//         : "user";
+
+//     const newUser = new User({
+//       name,
+//       email,
+//       password: hashedPassword,
+//       role, // Add this line
+//     });
+
+//     const savedUser = await newUser.save();
+//     console.log("New User Created:", savedUser);
+
+//     // Generate token for the new user, similar to the login process
+//     const token = jwt.sign({ userId: savedUser.id }, process.env.JWT_SECRET, {
+//       expiresIn: "15m",
+//     });
+
+//     try {
+//       const confirmationToken = crypto.randomBytes(20).toString("hex");
+//       // Here we use EmailConfirmation model to save the token
+//       await EmailConfirmation.createToken(
+//         savedUser._id,
+//         confirmationToken,
+//         Date.now() + 3600000
+//       ); // Adjust expiration as necessary
+//       const confirmUrl = `http://localhost:3000/confirm-email?token=${confirmationToken}`;
+
+//       await transporter.sendMail({
+//         from: process.env.EMAIL_FROM,
+//         to: email,
+//         subject: "Email Confirmation",
+//         html: `<p>Please confirm your email by clicking <a href="${confirmUrl}">here</a>.</p>`,
+//       });
+
+//       // Send a single response after all operations are successful
+//       res.status(201).json({
+//         status: true,
+//         message:
+//           "User successfully registered. Please check your email to confirm.",
+//         token: token,
+//         user_name: savedUser.name,
+//         role: savedUser.role, // Optionally include the role in the response
+//       });
+//     } catch (emailError) {
+//       console.error("Error sending confirmation email:", emailError);
+//       // If email fails, consider how you want to handle this. You might still want to confirm user creation was successful.
+//       // Avoid sending another HTTP response here; just log the error or handle it internally.
+//     }
+//   } catch (error) {
+//     if (error.code === 11000) {
+//       return res.status(400).json({ message: "Email already exist." });
+//     }
+//     console.error("Signup Error:", error);
+//     // Make sure to only reach this point if no response has been sent yet.
+//     res.status(500) .json({ message: "Error registering new user", error: error.message });
+//   }
+// };
+
+// Signup API in authController.js or userController.js
 exports.signup = async (req, res) => {
-  console.log("Request Body:", req.body);
-  const { name, email, password } = req.body;
-
-  // Check for missing fields
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  // Name validation: only letters and spaces
-  const nameRegex = /^[A-Za-z\s]+$/;
-  if (!nameRegex.test(name)) {
-    return res
-      .status(400)
-      .json({ message: "Name must contain only letters and spaces" });
-  }
-
-  // Email validation: basic format check
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ message: "Invalid email format" });
-  }
-
-  // Password validation: minimum 6 characters
-  if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ message: "Password must be at least 6 characters long" });
-  }
-
   try {
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const role =
-      email.toLowerCase() === "hamzasher7800@gmail.com".toLowerCase()
-        ? "admin"
-        : "user";
+    const { name, email, password } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "Email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Check if the email belongs to an admin
+    const isAdmin = (email === "hamzasher7800@gmail.com");  // Replace with your admin email
 
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      role, // Add this line
+      
+      role: isAdmin ? 'admin' : 'user'  // Assign 'admin' or 'user' based on email
     });
 
-    const savedUser = await newUser.save();
-    console.log("New User Created:", savedUser);
-
-    // Generate token for the new user, similar to the login process
-    const token = jwt.sign({ userId: savedUser.id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
-
-    try {
-      const confirmationToken = crypto.randomBytes(20).toString("hex");
-      // Here we use EmailConfirmation model to save the token
-      await EmailConfirmation.createToken(
-        savedUser._id,
-        confirmationToken,
-        Date.now() + 3600000
-      ); // Adjust expiration as necessary
-      const confirmUrl = `http://localhost:3000/confirm-email?token=${confirmationToken}`;
-
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to: email,
-        subject: "Email Confirmation",
-        html: `<p>Please confirm your email by clicking <a href="${confirmUrl}">here</a>.</p>`,
-      });
-
-      // Send a single response after all operations are successful
-      res.status(201).json({
-        status: true,
-        message:
-          "User successfully registered. Please check your email to confirm.",
-        token: token,
-        user_name: savedUser.name,
-        role: savedUser.role, // Optionally include the role in the response
-      });
-    } catch (emailError) {
-      console.error("Error sending confirmation email:", emailError);
-      // If email fails, consider how you want to handle this. You might still want to confirm user creation was successful.
-      // Avoid sending another HTTP response here; just log the error or handle it internally.
-    }
+    await newUser.save();
+    res.status(201).json({ message: "User registered successfully",user_name: newUser.name, role: newUser.role });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ message: "Email already exist." });
-    }
     console.error("Signup Error:", error);
-    // Make sure to only reach this point if no response has been sent yet.
-    res.status(500) .json({ message: "Error registering new user", error: error.message });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 ///#### ConfirmEmail API#######///////
 exports.confirmEmail = async (req, res) => {
@@ -453,41 +487,77 @@ exports.confirmEmail = async (req, res) => {
 };
 
 ////////######## LOGIN API #########//////////
+// exports.login = async (req, res) => {
+//   console.log("Login Request:", req.body);
+//   const { email, password } = req.body;
+
+//   try {
+//     const user = await User.findOne({ email: email });
+//     console.log("Found User:", user);
+//     if (!user || !(await bcrypt.compare(password, user.password))) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+//     const tokenExpirationDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
+//     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+//       expiresIn: "15m",
+//     });
+//     const tokenExpirationTime = new Date(
+//       Date.now() + tokenExpirationDuration
+//     ).toISOString();
+
+//     res.json({
+//       status: true,
+//       message: "Login successful",
+//       token: token,
+//       tokenExpiration: tokenExpirationTime,
+//       user_name: user.name,
+//       role: user.role, // Include this
+//     });
+//   } catch (error) {
+//     console.error("Login Error:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Internal server error", error: error.message });
+//   }
+// };
+// 
+// Login API
 exports.login = async (req, res) => {
-  console.log("Login Request:", req.body);
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email: email });
-    console.log("Found User:", user);
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    const tokenExpirationDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
-    const tokenExpirationTime = new Date(
-      Date.now() + tokenExpirationDuration
-    ).toISOString();
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect password.' });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
 
     res.json({
       status: true,
-      message: "Login successful",
-      token: token,
-      tokenExpiration: tokenExpirationTime,
+      message: 'Successfully logged in.',
+      token,
       user_name: user.name,
-      role: user.role, // Include this
+      role: user.role
     });
   } catch (error) {
     console.error("Login Error:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
-// // Ensure you import the transporter at the top of your authController.js file
+
+
+// Ensure you import the transporter at the top of your authController.js file
 const transporter = require("./emailTransporter"); // Adjust the path as needed
 // For Forgot Password and Reset Password, the try-catch logic and console logs follow a similar pattern...
 

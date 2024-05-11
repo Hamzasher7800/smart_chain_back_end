@@ -1,4 +1,4 @@
-const { Web3 } = require('web3');
+const Web3  = require('web3');
 const contractABI = require('../Services/contractAbi.json');
 const db = require('../Config/db'); // Adjust this path as needed
 const contractAddress = '0x815923875E5df5351ecC75A4db7Ad9E222555f06';
