@@ -1,10 +1,5 @@
-import Web3 from 'web3';
-const bscTestnetUrl = "https://data-seed-prebsc-1-s1.binance.org:8545";
-const web3 = new Web3(new Web3.providers.HttpProvider(bscTestnetUrl));
+const Web3 = require('web3');
+const ganacheUrl = 'http://127.0.0.1:7545';
+const web3 = new Web3(new Web3.providers.HttpProvider(ganacheUrl));
+module.exports = web3;
 
-
-
-// Call the initWeb3 function to initialize web3
-initWeb3();
-
-export default web3;

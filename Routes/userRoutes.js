@@ -14,10 +14,12 @@
 // module.exports= router;
 const express = require('express');
 const router = express.Router();
-const {updateProfile} = require('../Controllers/userController');
+const userController = require('../Controllers/userController');
 // Assume you have middleware to verify if the user is authenticated
+// const authMiddleware = require('../middleware/authMiddleware');
 const verifyToken = require('../middleware/authMiddleware');
 // Route to update user profile
-router.put('/updateProfile/:userId', verifyToken,updateProfile);
+router.get('/profile',verifyToken, userController.getProfile);
+router.put('/profile', verifyToken,userController.updateProfile);
 
 module.exports = router;

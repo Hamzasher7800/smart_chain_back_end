@@ -116,9 +116,9 @@ require("dotenv").config(); // To access environment variables
 // Signup API in authController.js or userController.js
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, ethereumAddress, role } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !ethereumAddress) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -129,60 +129,33 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if the email belongs to an admin
-    const isAdmin = email === "hamzasher7800@gmail.com.com"; // Replace with your admin email
-
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      role: isAdmin ? "admin" : "user", // Assign 'admin' or 'user' based on email
+      ethereumAddress, // Save the Ethereum address
+      role
     });
 
     await newUser.save();
-    res
-      .status(201)
-      .json({ message: "User registered successfully",user_name: newUser.name, role: newUser.role });
+
+    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.status(201).json({
+      token,
+      tokenExpiration: "1h",
+      user_name: newUser.name,
+      role: newUser.role,
+    });
   } catch (error) {
-    console.error("Signup Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Login API
-// exports.login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
 
-//     if (!email || !password) {
-//       return res.status(400).json({ status: false, message: 'Both email and password are required.' });
-//     }
-
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(404).json({ status: false, message: 'User not found.' });
-//     }
-
-//     const match = await bcrypt.compare(password, user.password);
-//     if (!match) {
-//       return res.status(401).json({ status: false, message: 'Incorrect password.' });
-//     }
-
-//     // Generate JWT token
-//     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-//     res.json({
-//       status: true,
-//       message: 'Successfully logged in.',
-//       token: token,
-//       // other user details as needed
-//     });
-//   } catch (error) {
-//     console.error("Login Error:", error);
-//     res.status(500).json({ status: false, message: "Internal server error." });
-//   }
-// };
-// Login API
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -209,6 +182,7 @@ exports.login = async (req, res) => {
       token,
       user_name: user.name,
       role: user.role,
+      ethereumAddress: user.ethereumAddress, // Include the Ethereum address here
     });
   } catch (error) {
     console.error("Login Error:", error);
@@ -216,21 +190,34 @@ exports.login = async (req, res) => {
   }
 };
 
-// Update user profile
-exports.updateProfile = async (req, res) => {
+
+exports.getProfile= async (req, res) => {
   try {
-    const { userId } = req.params; // Assuming you're passing the user's ID as a URL parameter
-    const { name, email } = req.body;
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { name, email },
-      { new: true }
-    );
-    if (!user) {
-      return res.status(404).send("User not found.");
-    }
-    res.status(200).json(user);
+      const userId = req.user.id; // Assuming you store user ID in the request
+      const user = await User.findById(userId).select('-password'); // Exclude password
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(user);
   } catch (error) {
-    res.status(500).send("Server error");
+      res.status(500).json({ message: 'Server error', error: error.message });
+  }
+},
+exports.updateProfile =async (req, res) => {
+  try {
+      const userId = req.user.id; // Assuming you store user ID in the request
+      const { name, bio, profilePicture } = req.body;
+      const user = await User.findByIdAndUpdate(
+          userId,
+          { name, bio, profilePicture, updatedAt: Date.now() },
+          { new: true, runValidators: true }
+      ).select('-password'); // Exclude password
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(user);
+  } catch (error) {
+      res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

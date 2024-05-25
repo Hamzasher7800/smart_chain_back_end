@@ -5,11 +5,11 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     name: { type: String, required: true },
     role: { type: String, required: true, default: 'user' },
-    resetToken: String,
-    resetTokenExpiration: Date,
+    ethereumAddress: { type: String, required: true },
+    bio: String,
+    profilePicture: String,
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', userSchema);
- 

@@ -244,195 +244,12 @@ const EmailConfirmation = require("../Config/email_confirmations");
 const User = require("../Model/Users"); // MongoDB model for User
 const crypto = require("crypto");
 require("dotenv").config();
-
-// exports.signup = async (req, res) => {
-//   console.log("Request Body:", req.body);
-//   const { name, email, password } = req.body;
-
-//   //  Check for missing fields
-//   if (!name || !email || !password) {
-//     return res.status(400).json({ message: "Missing required fields" });
-//   }
-
-//   // Name validation: only letters and spaces
-//   const nameRegex = /^[A-Za-z\s]+$/;
-//   if (!nameRegex.test(name)) {
-//     return res
-//       .status(400)
-//       .json({ message: "Name must contain only letters and spaces" });
-//   }
-
-//   // Email validation: basic format check
-//   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-//   if (!emailRegex.test(email)) {
-//     return res.status(400).json({ message: "Invalid email format" });
-//   }
-
-//   // Password validation: minimum 6 characters
-//   if (password.length < 6) {
-//     return res
-//       .status(400)
-//       .json({ message: "Password must be at least 6 characters long" });
-//   }
-//   // Validation logic remains the same...
-
-//   try {
-//     const hashedPassword = await bcrypt.hash(password, 12);
-//     const newUser = new User({
-//       name: name,
-//       email: email,
-//       password: hashedPassword,
-//     });
-
-//     await newUser.save();
-//     console.log("New User Created:", newUser);
-
-//       // Generate token for the new user, similar to the login process
-//       const tokenExpirationDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
-//       const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
-//         expiresIn: "15m",
-//       });
-//       const tokenExpirationTime = new Date(
-//         Date.now() + tokenExpirationDuration
-//       ).toISOString();
-
-//       res.status(201).json({
-//         status: true,
-//         message: "User successfully registered. Please check your email to confirm.",
-//         token: token,
-//         tokenExpiration: tokenExpirationTime,
-//         user_name: newUser.name,
-//       });
-
-//     if (!newUser || !newUser.id) {
-//       console.error("Failed to create new user in database");
-//       return res.status(500).json({ message: "Error registering new user" });
-//     }
-//     try {
-//       const confirmationToken = crypto.randomBytes(20).toString("hex");
-//       // Here we use EmailConfirmation model to save the token
-//       await EmailConfirmation.createToken(newUser._id, confirmationToken, Date.now() + 3600000); // Adjust expiration as necessary
-//       const confirmUrl = `http://localhost:3000/confirm-email?token=${confirmationToken}`;
-
-//       await transporter.sendMail({
-//         from: process.env.EMAIL_FROM,
-//         to: email,
-//         subject: "Email Confirmation",
-//         html: `<p>Please confirm your email by clicking <a href="${confirmUrl}">here</a>.</p>`,
-//       });
-//     } catch (emailError) {
-//       console.error("Error sending confirmation email:", emailError);
-//       // Optionally handle partial failure (user created but email not sent)
-//     }
-
-//     res.status(201).json({
-//       message: "User successfully registered. Please check your email to confirm.",
-//     });
-//   } catch (error) {
-//     console.error("Signup Error:", error);
-//     res.status(500).json({ message: "Error registering new user", error: error.message });
-//   }
-// };
-///////######## SIGNUP API ##########/////////
-// exports.signup = async (req, res) => {
-//   console.log("Request Body:", req.body);
-//   const { name, email, password } = req.body;
-
-//   // Check for missing fields
-//   if (!name || !email || !password) {
-//     return res.status(400).json({ message: "Missing required fields" });
-//   }
-
-//   // Name validation: only letters and spaces
-//   const nameRegex = /^[A-Za-z\s]+$/;
-//   if (!nameRegex.test(name)) {
-//     return res
-//       .status(400)
-//       .json({ message: "Name must contain only letters and spaces" });
-//   }
-
-//   // Email validation: basic format check
-//   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-//   if (!emailRegex.test(email)) {
-//     return res.status(400).json({ message: "Invalid email format" });
-//   }
-
-//   // Password validation: minimum 6 characters
-//   if (password.length < 6) {
-//     return res
-//       .status(400)
-//       .json({ message: "Password must be at least 6 characters long" });
-//   }
-
-//   try {
-//     const hashedPassword = await bcrypt.hash(password, 12);
-//     const role =
-//       email.toLowerCase() === "hamzasher7800@gmail.com".toLowerCase()
-//         ? "admin"
-//         : "user";
-
-//     const newUser = new User({
-//       name,
-//       email,
-//       password: hashedPassword,
-//       role, // Add this line
-//     });
-
-//     const savedUser = await newUser.save();
-//     console.log("New User Created:", savedUser);
-
-//     // Generate token for the new user, similar to the login process
-//     const token = jwt.sign({ userId: savedUser.id }, process.env.JWT_SECRET, {
-//       expiresIn: "15m",
-//     });
-
-//     try {
-//       const confirmationToken = crypto.randomBytes(20).toString("hex");
-//       // Here we use EmailConfirmation model to save the token
-//       await EmailConfirmation.createToken(
-//         savedUser._id,
-//         confirmationToken,
-//         Date.now() + 3600000
-//       ); // Adjust expiration as necessary
-//       const confirmUrl = `http://localhost:3000/confirm-email?token=${confirmationToken}`;
-
-//       await transporter.sendMail({
-//         from: process.env.EMAIL_FROM,
-//         to: email,
-//         subject: "Email Confirmation",
-//         html: `<p>Please confirm your email by clicking <a href="${confirmUrl}">here</a>.</p>`,
-//       });
-
-//       // Send a single response after all operations are successful
-//       res.status(201).json({
-//         status: true,
-//         message:
-//           "User successfully registered. Please check your email to confirm.",
-//         token: token,
-//         user_name: savedUser.name,
-//         role: savedUser.role, // Optionally include the role in the response
-//       });
-//     } catch (emailError) {
-//       console.error("Error sending confirmation email:", emailError);
-//       // If email fails, consider how you want to handle this. You might still want to confirm user creation was successful.
-//       // Avoid sending another HTTP response here; just log the error or handle it internally.
-//     }
-//   } catch (error) {
-//     if (error.code === 11000) {
-//       return res.status(400).json({ message: "Email already exist." });
-//     }
-//     console.error("Signup Error:", error);
-//     // Make sure to only reach this point if no response has been sent yet.
-//     res.status(500) .json({ message: "Error registering new user", error: error.message });
-//   }
-// };
-
 // Signup API in authController.js or userController.js
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, ethereumAddress } = req.body;
     
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !ethereumAddress) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -450,12 +267,12 @@ exports.signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      
+      ethereumAddress,
       role: isAdmin ? 'admin' : 'user'  // Assign 'admin' or 'user' based on email
     });
 
     await newUser.save();
-    res.status(201).json({ message: "User registered successfully",user_name: newUser.name, role: newUser.role });
+    res.status(201).json({ message: "User registered successfully", user_name: newUser.name, role: newUser.role });
   } catch (error) {
     console.error("Signup Error:", error);
     res.status(500).json({ message: "Internal server error" });

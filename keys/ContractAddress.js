@@ -1,1 +1,2 @@
- const ContractAddress ="0xf9AD4e23b4a2fdc7Da13434A42206A6018e3acC1"; 
+ const ContractAddress ="0xaDb793eB27B83A50e26E515C896FdB4F0B15395F"; 
+ module.exports = ContractAddress;
