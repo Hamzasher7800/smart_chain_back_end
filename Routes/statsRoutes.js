@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const statsController = require('../controllers/statsController'); // Adjust the path as necessary
+const statsController = require('../Controllers/statsController');
 
 router.get('/users', statsController.getUserCount);
 router.get('/orders/completed', statsController.getCompletedOrdersCount);
